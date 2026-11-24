@@ -15,7 +15,7 @@ export async function createDepartment(formData: FormData) {
     })
     revalidatePath("/she/master") // Refresh data di halaman master
     return { success: true }
-  } catch (error) {
+  } catch {
     return { error: "Gagal menyimpan departemen" }
   }
 }
@@ -27,7 +27,7 @@ export async function getDepartments() {
       orderBy: { createdAt: 'desc' }
     })
     return departments
-  } catch (error) {
+  } catch {
     return []
   }
 }
@@ -40,7 +40,7 @@ export async function deleteDepartment(id: string) {
     })
     revalidatePath("/she/master")
     return { success: true }
-  } catch (error) {
+  } catch {
     return { error: "Gagal menghapus departemen" }
   }
 }

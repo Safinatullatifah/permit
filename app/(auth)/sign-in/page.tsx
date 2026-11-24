@@ -1,5 +1,21 @@
 import { signIn } from "@/lib/auth"
+import prisma from "@/lib/prisma"
 import { AuthError } from "next-auth"
+
+function getDefaultRouteByRole(role?: string): string {
+  switch (role) {
+    case "USER":
+      return "/user"
+    case "PIC":
+      return "/pic"
+    case "LP":
+      return "/lp"
+    case "SHE":
+      return "/she/master"
+    default:
+      return "/she/master"
+  }
+}
 
 export default function SignInPage() {
   return (
@@ -14,14 +30,23 @@ export default function SignInPage() {
           action={async (formData) => {
             "use server"
             try {
-              // Langsung passing formData bawaan
-              await signIn("credentials", formData, { redirectTo: "/she/master" })
-            } catch (error) {
-              // Jika terjadi error dari NextAuth (selain redirect), kita tangkap di sini
+              const username = String(formData.get("username") ?? "")
+              const user = await prisma.user.findUnique({
+                where: { username },
+                select: { role: true },
+              })
+
+              // Ekstrak data secara eksplisit agar dikenali oleh Auth.js v5
+              await signIn("credentials", {
+                username: formData.get("username"),
+                password: formData.get("password"),
+                redirectTo: getDefaultRouteByRole(user?.role),
+              })
+            } catch (error: unknown) {
               if (error instanceof AuthError) {
                 console.log("Gagal login:", error.type)
               }
-              // Wajib di-throw ulang agar Next.js bisa melakukan navigasi halaman (redirect)
+              // Wajib di-throw ulang
               throw error 
             }
           }} 

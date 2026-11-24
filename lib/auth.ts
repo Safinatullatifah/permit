@@ -28,7 +28,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             id: user.id,
             name: user.full_name,
             role: user.role,
-            departmentId: user.departmentId
+            departmentId: user.departmentId ?? "",
+            vendorId: user.vendorId ?? "",
           }
         }
         return null
@@ -38,15 +39,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id
         token.role = user.role
         token.departmentId = user.departmentId
+        token.vendorId = (user as any).vendorId
       }
       return token
     },
     async session({ session, token }) {
       if (token && session.user) {
+        session.user.id = (token.id ?? token.sub ?? "") as string
         session.user.role = token.role as string
         session.user.departmentId = token.departmentId as string
+        session.user.vendorId = token.vendorId as string | undefined
       }
       return session
     },

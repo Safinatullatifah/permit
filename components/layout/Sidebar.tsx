@@ -13,9 +13,21 @@ export default function Sidebar({ role }: { role: string }) {
       case "LP":
         return [{ name: "Verifikasi Legal/PO", href: "/lp" }]
       case "SHE":
-        return [{ name: "Approval Akhir SHE", href: "/she" }, { name: "Master Data", href: "/she/master" }]
+        return [
+          { name: "Approval Akhir SHE", href: "/she" },
+          { name: "Monitoring Pekerja", href: "/security/monitoring" },
+          { name: "Master Departemen", href: "/she/master" },
+          { name: "Master Pengguna", href: "/she/users" },
+          { name: "Master Pekerjaan", href: "/she/master-pekerjaan" },
+          { name: "Aspek Keselamatan", href: "/she/master-keselamatan" },
+          { name: "Materi K3", href: "/she/materi" },
+          { name: "Bank Soal Kuis K3", href: "/she/kuis" },
+        ]
       case "SECURITY":
-        return [{ name: "Pos Gerbang (Scan QR)", href: "/security" }]
+        return [
+          { name: "Pos Gerbang (Scan QR)", href: "/security" },
+          { name: "Monitoring Pekerja Aktif", href: "/security/monitoring" },
+        ]
       default:
         return []
     }

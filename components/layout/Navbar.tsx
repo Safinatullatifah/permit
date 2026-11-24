@@ -1,4 +1,5 @@
 import { signOut } from "@/lib/auth"
+import { NotificationBell } from "./NotificationBell"
 
 export default function Navbar({ userName, role }: { userName: string, role: string }) {
   return (
@@ -9,6 +10,9 @@ export default function Navbar({ userName, role }: { userName: string, role: str
       <div className="hidden md:block"></div> {/* Spacer untuk desktop */}
       
       <div className="flex items-center gap-4">
+        {/* Lonceng Notifikasi Sistem */}
+        <NotificationBell />
+
         <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-gray-900">{userName}</p>
           <p className="text-xs text-gray-500 uppercase">{role}</p>

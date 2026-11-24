@@ -10,7 +10,8 @@ export default auth((req) => {
     pathname.startsWith('/api/auth') || 
     pathname === '/sign-in' || 
     pathname === '/vendor-sign-in' || 
-    pathname.startsWith('/induction') // Halaman publik untuk pekerja[cite: 3, 5]
+    pathname.startsWith('/induction') || // Halaman publik untuk pekerja[cite: 3, 5]
+    pathname.startsWith('/verify-certificate')
 
   // Jika belum login dan mencoba masuk ke halaman terproteksi, lempar ke halaman sign-in
   if (!isLoggedIn && !isPublicRoute) {
@@ -22,5 +23,5 @@ export default auth((req) => {
 
 // Tentukan rute mana saja yang akan diawasi oleh middleware
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|uploads|favicon.ico).*)"],
 }

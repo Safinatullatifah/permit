@@ -13,6 +13,7 @@ enum Role {
   USER
   SECURITY
   PIC
+  VENDOR
 }
 
 model Department {
@@ -31,13 +32,20 @@ model User {
   password     String
   full_name    String
   role         Role
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  vendorId     String?
+  vendor       Vendor?     @relation(fields: [vendorId], references: [id])
   last_login   DateTime?
   created_at   DateTime   @default(now())
   updated_at   DateTime   @updatedAt
 
   refreshTokens RefreshToken[]
+  userPermits   Permit[]       @relation("UserPermits")
+  picPermits    Permit[]       @relation("PicPermits")
+  chatMessages  ChatMessage[]
+  chatReads     ChatReadStatus[]
+  notifications Notification[]
 }
 
 model RefreshToken {
@@ -47,3 +55,445 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id])
   expiresAt DateTime
 }
+
+model SpecialPermit {
+  id           String         @id @default(uuid())
+  name         String
+  isActive     Boolean        @default(true)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+
+  permitKhusus PermitKhusus[]
+}
+
+model WorkType {
+  id           String         @id @default(uuid())
+  name         String
+  isActive     Boolean        @default(true)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  
+  subWorkTypes SubWorkType[] // Relasi one-to-many ke Sub-Jenis Pekerjaan
+  permitKhusus PermitKhusus[]
+}
+
+model SubWorkType {
+  id           String         @id @default(uuid())
+  name         String
+  workTypeId   String
+  workType     WorkType       @relation(fields: [workTypeId], references: [id])
+  isActive     Boolean        @default(true)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+
+  permitKhusus PermitKhusus[]
+}
+
+// ==========================================
+// MASTER DATA POIN 3
+// ==========================================
+
+model MasterApd {
+  id         String      @id @default(uuid())
+  name       String
+  isActive   Boolean     @default(true)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+
+  daftarApd  DaftarApd[]
+}
+
+model MasterSafetyCheck {
+  id         String        @id @default(uuid())
+  name       String
+  isActive   Boolean       @default(true)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+
+  checks     DaftarCheck[]
+}
+
+model MasterBorrowedItem {
+  id              String            @id @default(uuid())
+  name            String
+  isActive        Boolean           @default(true)
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+
+  pinjamEquipment PinjamEquipment[]
+}
+
+model MasterElectrical {
+  id         String   @id @default(uuid())
+  name       String
+  isActive   Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  jsaSambungan JSASambungan[]
+}
+
+model K3Material {
+  id         String   @id @default(uuid())
+  title      String
+  fileUrl    String
+  fileType   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Materi {
+  id        String   @id @default(uuid())
+  title     String
+  fileUrl   String
+  fileType  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Quiz {
+  id        String    @id @default(uuid())
+  question  String
+  imageUrl  String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  choices       Choices[]
+  memberAnswers MemberAnswer[]
+}
+
+model Choices {
+  id        String   @id @default(uuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text      String
+  isCorrect Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberAnswers MemberAnswer[]
+}
+
+enum PermitStatus {
+  OPEN
+  CLOSED
+  REJECTED
+  PENDING
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  permits   Permit[]
+  users     User[]
+}
+
+model Permit {
+  id             String       @id @default(cuid())
+  nomor          String       @unique
+  workName       String
+  location       String
+  startDate      DateTime
+  endDate        DateTime
+  userId         String
+  user           User         @relation("UserPermits", fields: [userId], references: [id])
+  vendorId       String
+  vendor         Vendor       @relation(fields: [vendorId], references: [id])
+  picId          String
+  pic            User         @relation("PicPermits", fields: [picId], references: [id])
+  pengawasId     String
+  poNumber       String?
+  spkNumber      String?
+  isHighRisk     Boolean      @default(false)
+  picVendor      String?
+  picVerified    Boolean?
+  picVerifiedAt  DateTime?
+  remarkPic      String?
+  lpVerified     Boolean?
+  lpVerifiedAt   DateTime?
+  remarkLp       String?
+  userVerified   Boolean?
+  userVerifiedAt DateTime?
+  remarkUser     String?
+  sheVerifiedAt  DateTime?
+  remarkShe      String?
+  status         PermitStatus @default(PENDING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  jsa             JobSafetyAnalysis?
+  permitKhusus    PermitKhusus[]
+  daftarApd       DaftarApd[]
+  pinjamEquipment PinjamEquipment[]
+  barangBawaan    BarangBawaan[]
+  members         MemberPermit[]
+  chatMessages    ChatMessage[]
+  chatReads       ChatReadStatus[]
+  notifications   Notification[]
+}
+
+model JobSafetyAnalysis {
+  id           String               @id @default(cuid())
+  permitId     String               @unique
+  permit       Permit               @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  isElectrical Boolean              @default(false)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  tahapan      DeskripsiPekerjaan[]
+  peralatan    Peralatan[]
+  sambungan    JSASambungan[]
+}
+
+model DeskripsiPekerjaan {
+  id        String            @id @default(cuid())
+  jsaId     String
+  jsa       JobSafetyAnalysis @relation(fields: [jsaId], references: [id], onDelete: Cascade)
+  text      String
+  urutan    Int               @default(1)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  bahaya    Bahaya[]
+}
+
+model Bahaya {
+  id          String             @id @default(cuid())
+  deskripsiId String
+  deskripsi   DeskripsiPekerjaan @relation(fields: [deskripsiId], references: [id], onDelete: Cascade)
+  text        String
+  urutan      Int                @default(1)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  pengendalian Pengendalian[]
+}
+
+model Pengendalian {
+  id        String   @id @default(cuid())
+  bahayaId  String
+  bahaya    Bahaya   @relation(fields: [bahayaId], references: [id], onDelete: Cascade)
+  text      String
+  urutan    Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Peralatan {
+  id         String            @id @default(cuid())
+  jsaId      String
+  jsa        JobSafetyAnalysis @relation(fields: [jsaId], references: [id], onDelete: Cascade)
+  nama       String
+  itemSafety String?
+  jumlah     Int               @default(1)
+  imageUrl   String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+model JSASambungan {
+  id                 String            @id @default(cuid())
+  jsaId              String
+  jsa                JobSafetyAnalysis @relation(fields: [jsaId], references: [id], onDelete: Cascade)
+  masterElectricalId String
+  masterElectrical   MasterElectrical  @relation(fields: [masterElectricalId], references: [id])
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+enum CheckStatus {
+  YES
+  NO
+  NA
+}
+
+model PermitKhusus {
+  id              String         @id @default(cuid())
+  permitId        String
+  permit          Permit         @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  specialPermitId String
+  specialPermit   SpecialPermit  @relation(fields: [specialPermitId], references: [id])
+  workTypeId      String?
+  workType        WorkType?      @relation(fields: [workTypeId], references: [id])
+  subWorkTypeId   String?
+  subWorkType     SubWorkType?   @relation(fields: [subWorkTypeId], references: [id])
+  informasiLain   String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  checks          DaftarCheck[]
+
+  @@unique([permitId, specialPermitId])
+}
+
+model DaftarCheck {
+  id                  String            @id @default(cuid())
+  permitKhususId      String
+  permitKhusus        PermitKhusus      @relation(fields: [permitKhususId], references: [id], onDelete: Cascade)
+  masterSafetyCheckId String
+  masterSafetyCheck   MasterSafetyCheck @relation(fields: [masterSafetyCheckId], references: [id])
+  status              CheckStatus       @default(NA)
+  notes               String?
+  documentPath        String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model DaftarApd {
+  id          String    @id @default(cuid())
+  permitId    String
+  permit      Permit    @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  masterApdId String
+  masterApd   MasterApd @relation(fields: [masterApdId], references: [id])
+  customName  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([permitId, masterApdId])
+}
+
+enum PinjamStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+model PinjamEquipment {
+  id        String             @id @default(cuid())
+  permitId  String
+  permit    Permit             @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  barangId  String
+  barang    MasterBorrowedItem @relation(fields: [barangId], references: [id])
+  jumlah    Int                @default(1)
+  status    PinjamStatus       @default(PENDING)
+  catatan   String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model BarangBawaan {
+  id        String   @id @default(cuid())
+  permitId  String
+  permit    Permit   @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  nama      String
+  jumlah    Int      @default(1)
+  satuan    String?
+  catatan   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MemberPermit {
+  id           String        @id @default(cuid())
+  permitId     String
+  permit       Permit        @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  name         String
+  isHealthy    Boolean       @default(true)
+  idCardNumber String?
+  position     String?
+  phone        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  quizResult   QuizResult?
+  answers      MemberAnswer[]
+  certificate  Certificate?
+  records      MemberRecord[]
+}
+
+model QuizResult {
+  id          String       @id @default(cuid())
+  memberId    String       @unique
+  member      MemberPermit @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  score       Int          @default(0)
+  isPassed    Boolean      @default(false)
+  isCompleted Boolean      @default(false)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model MemberAnswer {
+  id        String       @id @default(cuid())
+  memberId  String
+  member    MemberPermit @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  quizId    String
+  quiz      Quiz         @relation(fields: [quizId], references: [id])
+  choiceId  String
+  choice    Choices      @relation(fields: [choiceId], references: [id])
+  createdAt DateTime     @default(now())
+
+  @@unique([memberId, quizId])
+}
+
+model Certificate {
+  id        String       @id @default(cuid())
+  memberId  String       @unique
+  member    MemberPermit @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  nomor     String       @unique
+  isValid   Boolean      @default(true)
+  expiredAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model MemberRecord {
+  id          String       @id @default(cuid())
+  memberId    String
+  member      MemberPermit @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  jamMasuk    DateTime?
+  jamKeluar   DateTime?
+  catatan     String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ChatMessage {
+  id             String    @id @default(cuid())
+  permitId       String
+  permit         Permit    @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  message        String    @db.Text
+  attachmentUrl  String?
+  attachmentName String?
+  createdAt      DateTime  @default(now())
+}
+
+model ChatReadStatus {
+  id         String   @id @default(cuid())
+  permitId   String
+  permit     Permit   @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([permitId, userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permitId  String?
+  permit    Permit?   @relation(fields: [permitId], references: [id], onDelete: SetNull)
+  title     String
+  message   String    @db.Text
+  type      String    @default("INFO")
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  link      String?
+  createdAt DateTime  @default(now())
+}
+
